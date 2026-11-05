@@ -12,7 +12,7 @@ own branch from main.
 Codebase is using dotnet 10.0.  Use `dotnet build` to compile, and `dotnet test`
 to run unit test suite.
 
-Each `.csproj` imports the root `CodingStandards.props`, which holds the shared
+Each `.csproj` imports the root `Standard.props`, which holds the shared
 coding-standards build/analysis settings (target framework, langversion,
 nullable, implicit usings, analyzers).
 
