@@ -1,7 +1,7 @@
 # AGENTS.md
 
-See [CONTRIB.md](CONTRIB.md) for coding style guide. Read the CONTRIB.md fully
-before making changes.
+See [CONTRIB.md](CONTRIB.md) for coding style guide(s). Read the CONTRIB.md and
+any appropriate linked documents fully before making changes.
 
 See [TODO.md](TODO.md) for the TODO list.  Delete items from the TODO list when
 complete.  Each major TODO heading should be implemented as its own PR with its
@@ -11,10 +11,6 @@ own branch from main.
 
 Codebase is using dotnet 10.0.  Use `dotnet build` to compile, and `dotnet test`
 to run unit test suite.
-
-Each `.csproj` imports the root `Standard.props`, which holds the shared
-coding-standards build/analysis settings (target framework, langversion,
-nullable, implicit usings, analyzers).
 
 # Testing
 
@@ -27,6 +23,6 @@ instructed to do so. Do not remove comments unless they are untrue.
 
 # Scratch space
 
-Create any needed working files such as experiments within the `temp` dir, which
-is gitignored.  Create personal notes for future reference in `MEMORY.md`, which
+Create any needed working files such as experiments within the `temp/` dir, which
+is `.gitignore`d.  Create personal notes for future reference in `MEMORY.md`, which
 is also gitignored.
