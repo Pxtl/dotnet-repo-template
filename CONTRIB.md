@@ -7,87 +7,191 @@ consideration before starting work.
 
 # Coding Standards
 
-This document captures the coding style patterns used in this project.
+This document captures the dotnet coding style patterns used in this project.
 
-## General
+## Project Structure
 
-- **Global usings**: Use `global using` directives at the file top for common
-  namespaces (`System`, `System.Linq`, `System.Collections.Generic`,
-  `System.IO`, etc.). See `.NETCoreApp,Version=v10.0.AssemblyAttributes.cs`.
+### Directory Tree
+
+Source files go in `src/{{ ProjName }}`, tests go in `tests/{{ TestProjName }}`,
+there shall be a single `.slnx` file at the repo root, supplementary markdown
+documents go in `doc/`, experiments go in the `.gitignore`d `temp/` dir.  If a
+directory needs commentary that can't be associated to a single file (for
+example contains files that are not practically commentable, such as images),
+then createa directory-local `README.md`.
+
+### Files
+
+- One type per file, avoid nested types except for low-visibility modes like
+  `private`.
+- Simple one-line types can be defined in another type's file IFF the type is a
+  simple one-line declaration and is primarily used by that class.  Bonus points
+  if it is prefixed with the class name (eg: `SomeClass` and simple type
+  `SomeClassException`).
+  - These secondary types should be at the *end* of the file.
+- Namespaces match directory path.
+- Filenames match type name.
+- Exception to the "one-line-types" rule exists for extension classes as
+  described in Extension Methods section.
+
+### Docs
+
+- Repo-standard markdown docs go at root in ALLCAPS. Additional docs go in
+  `doc/` and are `kebab-cased.md`.
+
+### .csproj files
+
+Proj files should import `Standard.props` where possible, which will provide the
+default C# compiler settings and style enforcement.
+
+## C# Code
+
+### Variable Naming
+- Variable names should be clear and informative. While abbreviations are
+  permitted, they should be common jargon and not invented (eg "Ctl" for
+  "Control", or "Config" for "Configuration" are good).
+- Hyper-brief one-or-two character names are okay for lambda parameters, but
+  they should still be informative. eg:
+
+  ```csharp
+  bookCollection.Select(b => b.Title)
+  ```
+
+### Namespace Imports
+
+- **Global usings**: Use `global using` directives in `GlobalUsings.cs` to
+  import namespaces that are heavily used across most files..
 - **File-level usings**: Place `using` directives before the namespace
   declaration.
+- Do not redundantly `using` the namespaces already provided by
+  `<ImplicitUsings>enable</ImplicitUsings>` in `Standard.props`.
 
-## Indentation
+
+### Indentation
 
 - Use **spaces** for indentation (not tabs).
+- 4 spaces for C# or SQL source code, 2 spaces for Markdown, 
+- When breaking up a expression of peer-level tokens across multiple lines, indent the successive lines. Eg:
 
-## Braces (OTBS - Open on Same Line)
+  ```csharp
+  result = myCollection
+      .SomeOperation()
+      .SomeOtherOperation()
+      .ToList();
+  ```
+
+- Multi-keyword declaration statements can live at the same indentation level,
+  eg class declarations
+
+  ```csharp
+  public class MyClass<T>
+  : MyBaseClass<T>, IMyInterface<T>
+  where T : ISomeInterface {
+      ...
+  }
+  ```
+
+- Child levels of the parse-tree should almost always be indented.
+- Avoid horizontal alignment.
+
+### Braces (OTBS - Open on Same Line)
 
 - Open braces on the same line as the declaration, closing brace on its own
   line.
 - For methods:
 
-    ```csharp
-    public void MethodName(...) {
-        // body
-    }
-    ```
+  ```csharp
+  public void MethodName(...) {
+      // body
+  }
+  ```
 
 - For property accessors / initializers:
 
-    ```csharp
-    public SomeType Prop { get; set; } = defaultValue;
-    public SomeType Prop2 { get; init; }
-    public int SingleValueProp => expression;
-    ```
+  ```csharp
+  public SomeType Prop { get; set; } = defaultValue;
+  public SomeType Prop2 { get; init; }
+  public int SingleValueProp => expression;
+  ```
 
 - If a single value property has has non-trivial complexity:
 
-    ```csharp
-    public int SingleValueProp 
-    => longAndComplicatedExpression;
-    ```
+  ```csharp
+  public int SingleValueProp 
+  => longAndComplicatedExpression;
+  ```
 
-- For records:
+- Always brace ifs.
+- Single-line braced statements should only be done in hyper-trivial cases, like
+  empty class bodies `{ }`.
+- Use `dotnet format` to apply styling to files.
 
-    ```csharp
-    public record StructType(int A, int B) {}
+### Parens
 
-    public record ClassType {
-    #region constructors
-        public ClassType() {}
-    #endregion
-    };
-    ```
+- Use parens where operators are mixed and order-of-operations is
+  less-well-known, even if it is not necessary.
+- `||` operations should almost always be in parens in expressions with mixed
+  operators.
+- Existing code is inconsistent for trailing parens in multi-line blocks,
+  whether or not it should be linebreak-before `)` or not.  Use whichever
+  convention is common in the codebase.  So both of the following examples are
+  valid, but a codebase should pick one and stick to it.
+  
+  ```csharp
+  longFunctionCall(
+    param,
+    secondParam,
+    thirdParam
+  );
+  ```
 
-## Linebreaks
+  ```csharp
+  longFunctionCall(
+    param,
+    secondParam,
+    thirdParam);
 
-- Break logical statements on new lines if they're too long.
+### Linebreaks
+
+- Break logical statements on new lines if they're too long. A line of code
+  should have only one or two concerns.  Multiple semicoloned statements is a
+  red flag.
 - Use whitespace after commas in multi-parameter calls.
 - Soft length limit at 80 char, hard limit at 120 char.  Avoid complicated logic
   on a single line.
-- Put one blank line between any sibling multi-line expressions or declarations.
-- For multi-line property expressions, break at operators:
+- Put one blank line between any sibling multi-line expressions or declarations, eg:
 
-    ```csharp
-    public OneOf<NotFound, BoardIsDone, Result<int>> SelectBoard(int boardCode)
-    => (boardCode <= 0 || boardCode > Boards.Count)
-        ? new NotFound()
-        : GetBoardByCode(boardCode).IsDone
-        ? new BoardIsDone()
-        : new Result<int>(boardCode - 1);
-    ```
+  ```csharp
+  var myResult = myCollection
+      .DoSomething()
+      .DoSomethingElse();
+      .ToList();
 
-- For non-trivial ternary expressions, break onto multiple lines with the `?`
-  and `:` at the start of their own lines:
+  SomeSecondOperationAfterABlankLine();
+  ```
+    
+- For multi-line property expressions, break before operators:
 
-    ```csharp
-    var result = someCondition
-        ? DoSomething()
-        : DoSomethingElse();
-    ```
+  ```csharp
+  public OneOf<NotFound, BoardIsDone, Result<int>> SelectBoard(int boardCode)
+  => (boardCode <= 0 || boardCode > Boards.Count)
+      ? new NotFound()
+      : GetBoardByCode(boardCode).IsDone
+      ? new BoardIsDone()
+      : new Result<int>(boardCode - 1);
+  ```
 
-## Comments
+- For ternary expressions, unless it is absolutely the simplest possible case,
+  break onto multiple lines with the `?` and `:` at the start of their own
+  lines:
+
+  ```csharp
+  var result = someCondition
+      ? DoSomething()
+      : DoSomethingElse();
+  ```
+
+### Comments
 
 - Use **XML-style comments** (`///`) for documentation on classes, methods,
   properties, and public APIs.
@@ -95,47 +199,52 @@ This document captures the coding style patterns used in this project.
 - XML-style comments include XML tags like `<summary>`, `<returns>`,
   `<remarks>`.
 - Do not write trivial comments that just restate the name of the object. Do not
-  provide empty parameter XML comments.
+  provide empty parameter XML comments. For example, if a parameter has a clear
+  name and does not require elaboration, do not provide an xml-style comment for
+  it.
 
-    ```csharp
-    /// <summary>
-    /// Helper function to draw a border row of the board.
-    /// </summary>
-    /// <returns>
-    /// Returns the index of the next board to draw if it needs another row of
-    /// boards.
-    /// </returns>
-    private static int DrawBorderRow(...) {
-        ...
-    }
-    ```
+  ```csharp
+  /// <summary>
+  /// Helper function to draw a border row of the board.
+  /// </summary>
+  /// <returns>
+  /// Returns the index of the next board to draw if it needs another row of
+  /// boards.
+  /// </returns>
+  private static int DrawBorderRow(int someWellDocumentedIntParameter) {
+      ...
+  }
+  ```
 
 - Keep inline comments brief and relevant.
 
-## Boolean Parameters
+### Public API Naming
+
+#### Boolean Parameters
 
 - Boolean parameters should be at the end of the parameter-set.
 - Use `is`, `can`, `are`, or `do` prefix for boolean parameters where helpful
   for readability:
 
-    ```csharp
-    public void RunGame(
-        char[] players,
-        bool isRandomPlayerOrder,
-        bool isSynchronousMode) {
-        ...
-    }
-    
-    public bool CanTakeTurn(char? player) {
-        ...
-    }
-    ```
+  ```csharp
+  public void RunGame(
+      char[] players,
+      bool isRandomPlayerOrder,
+      bool isSynchronousMode) {
+      ...
+  }
+  
+  public bool CanTakeTurn(char? player) {
+      ...
+  }
+  ```
+
 - When calling complex parameter-sets with boolean parameters, use named
   parameters for the Booleans if using raw `true` or `false` values.
 
-## Boolean Return Values
+#### Boolean Return Values
 
-- For boolean return values, prefer `is` prefix for the return type name when
+- For boolean return values, prefer `Is` prefix for the return type name when
   naming conventions allow:
 
   ```csharp
@@ -144,7 +253,10 @@ This document captures the coding style patterns used in this project.
   public bool IsGameOver => ...;
   ```
 
-## Properties
+- Other simple verbs are also allowed (non-exclusive list): `Has`, `Can`,
+  `Does`.
+
+### Properties
 
 - Use property initializers when possible:
 
@@ -181,103 +293,134 @@ This document captures the coding style patterns used in this project.
   }}
   ```
 
-## C# Features
+### Newer C# Features
 
-### Records
+#### Records
 
 - Prefer `record` types for immutable data models:
 
-    ```csharp
-    public record ScoreCard {
-        ... 
-    }
+  ```csharp
+  public record class ScoreCard {
+      ... 
+  }
 
-    public record BoardBuilder(sbyte Width, sbyte Height);
-    ```
+  public record struct BoardBuilder(sbyte Width, sbyte Height);
+  ```
 
-### Generics and Constraints
+#### Generics and Constraints
 
 - Specify generic constraints explicitly when helpful:
 
-    ```csharp
-    public static TItem? MaxByStrict<TItem, TProperty>(
-        this IEnumerable<TItem> items, 
-        Func<TItem, TProperty> getter) 
-    where TItem : struct {
-        ...
-    }
-    ```
+  ```csharp
+  public static TItem? MaxByStrict<TItem, TProperty>(
+      this IEnumerable<TItem> items, 
+      Func<TItem, TProperty> getter) 
+  where TItem : struct {
+      ...
+  }
+  ```
 
-## Extension Methods
+#### Extension Methods
 
-- Define extensions as `static class` with extension method syntax:
+- Use the new C# static `extension()` statement when using a C# version where it
+  is available.
+- Define extensions as `static class` with extension method syntax (note,
+  example assumes older C# version without `extension()` keyword. TODO: fix that):
 
-    ```csharp
-    public static class ExtensionMethods {
-        public static TItem? MaxByStrict<TItem, TProperty>(
-            this IEnumerable<TItem> items, 
-            Func<TItem, TProperty> getter) 
-        where TItem : struct {
-            ...
-        }
-    }
-    ```
+  ```csharp
+  public static class ExtensionMethods {
+      public static TItem? MaxByStrict<TItem, TProperty>(
+          this IEnumerable<TItem> items, 
+          Func<TItem, TProperty> getter) 
+      where TItem : struct {
+          ...
+      }
+  }
+  ```
 
-## `var` Usage
+- It is permitted to piggyback an extension class at the bottom of the same
+  `.cs` file as its related class `RelatedClass` (particularly for something
+  like an enum or an interface), as long as the name of the extension class is
+  `RelatedClassExtensions` or `RelatedClassHelper`. "Helper" is preferred suffix
+  if the extension also provides non-extension static methods for the
+  `RelatedClass`.
 
-- Use `var` for local variables where the type is obvious from context (common
-  after foreach, LINQ, etc.):
+#### `var` Usage
 
-    ```csharp
-    for (var col = 0; col < Spaces.GetLength(0); col+=1) { ... }
-    var boardBuilders = new Model.BoardBuilder[boardsNumber!.Value];
-    ```
+- Use `var` for local variables wherever practical.
 
-## `#region` and `#endregion`
+#### `#region` and `#endregion`
 
 - Use `#region` / `#endregion` to organize code blocks:
 
-    ```csharp
-    #region constructors
-    public Board() {}
-    public Board(BoardBuilder builder) : this(builder.Width, builder.Height) {}
-    #endregion
+  ```csharp
+  #region constructors
+  public Board() {}
+  public Board(BoardBuilder builder) : this(builder.Width, builder.Height) {}
+  #endregion
 
-    #region main data properties
-    public Space[,] Spaces {get;set;} = new Space[1,1]{{new Space()}};
-    #endregion
+  #region data properties
+  public Space[,] Spaces {get;set;} = new Space[1,1]{{new Space()}};
+  #endregion
 
-    #region Methods
-    public int GetSpaceIndexCode(int col, int row) { ... }
-    #endregion
+  #region methods
+  public int GetSpaceIndexCode(int col, int row) { ... }
+  #endregion
 
-    #region helper properties
-    public int ColumnCount
-        => Spaces.GetLength(0);
-    #endregion
-    ```
+  #region helper properties
+  public int ColumnCount
+  => Spaces.GetLength(0);
+  #endregion
+  ```
 
-## Null Handling
+### Null Handling
 
 - Use `!` (null-forgiving) operator when non-null is guaranteed:
 
-    ```csharp
-    var file = parseResult.GetValue(Options.StateFileOption)!;
-    ```
+  ```csharp
+  var file = parseResult.GetValue(Options.StateFileOption)!;
+  ```
 
 - Use `?.` (null-conditional) for safe navigation where needed:
 
-    ```csharp
-    (joinAsPlayer ?? "").Cast<char?>().SingleOrDefault();
-    ```
+  ```csharp
+  (joinAsPlayer ?? "").Cast<char?>().SingleOrDefault();
+  ```
 
-- Prefer `Nullable<T>` for APIs that may return null:
+- Prefer `Nullable<T>` for APIs that may return null if the null meaningfully
+  means "none":
 
-    ```csharp
-    public char? Winner { ... }
-    ```
+  ```csharp
+  public char? Winner { ... }
+  ```
 
-## Miscellaneous Patterns
+- Prefer `https://github.com/mcintyre321/OneOf` over a nullable return (`T?` /
+  `(A, B)?`) when a null result means a *very different event* has occurred
+  rather than merely an absent value, such as expected failures. Do not use
+  `null` for such cases.  Name the alternative case (e.g. `OneOf<CommandToken,
+  None>` for "this message is not a command"), so callers switch on meaning
+  instead of testing for null:
+
+  ```csharp
+  public OneOf<CommandToken, None> ParseCommand(string message) { ... }
+  ```
+
+- An alternative pattern for "found or not" cases is to return an
+  `IEnumerable` of parsed results (1 or 0 items expected) and have the caller
+  simply `foreach` across the results - the empty case then falls out
+  naturally as a no-op. This also extends cleanly to multiple results per
+  call.
+
+### OneOf Usage
+
+- Convert between `OneOf` types using `.Match<>()` when needed.
+
+- Prefer the lambda-based `Switch`/`Match` methods for branching between
+  outcomes; avoid `IsT0`/`AsT0`-style accessors, which scattered-type-check the
+  union and lose exhaustiveness. Use them only where necessary (e.g. a quick
+  `IsT1` bail-out in non-branching code).
+
+### Miscellaneous Patterns
 
 - Use string-interpolation for building strings:
 
@@ -294,14 +437,15 @@ This document captures the coding style patterns used in this project.
     using var fileStream = new FileStream(...);
     ```
 
-## Files
+### Testing
 
-- One type per file, avoid nested types.  
-- Simple one-line types can be defined in another type's file IFF the type is a
-  simple one-line declaration.
-- Namespaces match directory path.
-
-## Docs
-
-- Repo-standard docs go at root in ALLCAPS. Additional docs go in `/doc/` and
-  are `kebab-cased.md`.
+- **Do not test private/protected members via reflection** (`Type.GetMethod(...)`
+  + `Invoke`). Reflection-based test accessors are fragile, untyped, and bypass the
+  compiler. Instead:
+  - Prefer making the member `internal` and exposing it to the test assembly with
+    `[assembly: InternalsVisibleTo("...")]` (see `src/**/AssemblyInfo.cs`), then call
+    it directly.
+  - If the member must stay inaccessible (sealed/private by design), use
+    `System.Runtime.CompilerServices.UnsafeAccessor`
+    (`FromMethodAccess` / `FromStaticMethodAccess` / `FromFieldAccess`) rather than
+    raw reflection.
