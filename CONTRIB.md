@@ -50,10 +50,10 @@ default C# compiler settings and style enforcement.
 - Variable names should be clear and informative. While abbreviations are
   permitted, they should be common jargon and not invented (eg "Ctl" for
   "Control", or "Config" for "Configuration" are good).
-- Single-letter names (a, b, x) should be avoided, including for lambda
-  parameters to higher-order functions: prefer `players.Select(player => ...)`
-  over `players.Select(p => ...)`.  Exception: trivially-scoped loop counters
-  and indices (`for (var i = 0; ...)`).
+- Hyper-brief one-or-two character names are okay for loop indexes and
+  lambda parameters, but they should still be informative: `i` for a
+  for-loop counter, or the first char of the object's name
+  (`bookCollection.Select(b => b.Title)`).
 
 ### Namespace Imports
 
