@@ -50,12 +50,10 @@ default C# compiler settings and style enforcement.
 - Variable names should be clear and informative. While abbreviations are
   permitted, they should be common jargon and not invented (eg "Ctl" for
   "Control", or "Config" for "Configuration" are good).
-- Hyper-brief one-or-two character names are okay for lambda parameters, but
-  they should still be informative. eg:
-
-  ```csharp
-  bookCollection.Select(b => b.Title)
-  ```
+- Hyper-brief one-or-two character names are okay for loop indexes and
+  lambda parameters, but they should still be informative: `i` for a
+  for-loop counter, or the first char of the object's name
+  (`bookCollection.Select(b => b.Title)`).
 
 ### Namespace Imports
 
@@ -157,6 +155,9 @@ default C# compiler settings and style enforcement.
   should have only one or two concerns.  Multiple semicoloned statements is a
   red flag.
 - Use whitespace after commas in multi-parameter calls.
+- If a multi-parameter signature exceeds the line-length limit, put each
+  parameter on its own line.  Short signatures that fit on one line are fine
+  to keep on one line.
 - Soft length limit at 80 char, hard limit at 120 char.  Avoid complicated logic
   on a single line.
 - Put one blank line between any sibling multi-line expressions or declarations, eg:
